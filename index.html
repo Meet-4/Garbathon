@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerGuard &amp; Tracker | AI Job Application Security &amp; Pipeline Engine</title>
+  <meta name="description" content="AI intelligence engine protecting job seekers from recruitment fraud while tracking high-volume job pipelines deterministically.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modules.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">CareerGuard &amp; Tracker</h1>
+          <div class="brand-sub">Deterministic Job Pipeline Analytics &amp; Anti-Fraud Intelligence</div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div class="header-status-badge" id="system-status-indicator">
+          <span class="pulse-dot"></span>
+          <span>Security Engine Active &bull; Reference Date: Oct 24, 2026</span>
+        </div>
+        <button class="btn btn-ghost" id="btn-export-csv">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+        <button class="btn btn-primary" id="btn-export-json">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Export JSON
+        </button>
+      </div>
+    </header>
+
+    <!-- Executive Stat Tiles -->
+    <section class="stats-grid" id="stats-overview">
+      <div class="stat-tile cyan glass-panel">
+        <div class="stat-icon">📨</div>
+        <div class="stat-meta">
+          <div class="stat-val" id="stat-total-emails">20</div>
+          <div class="stat-label">Ingested Emails</div>
+        </div>
+      </div>
+
+      <div class="stat-tile success glass-panel">
+        <div class="stat-icon">💼</div>
+        <div class="stat-meta">
+          <div class="stat-val" id="stat-active-pipelines">15</div>
+          <div class="stat-label">Legitimate Pipelines</div>
+        </div>
+      </div>
+
+      <div class="stat-tile purple glass-panel">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-meta">
+          <div class="stat-val" id="stat-offers">1</div>
+          <div class="stat-label">Active Offers</div>
+        </div>
+      </div>
+
+      <div class="stat-tile danger glass-panel">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-meta">
+          <div class="stat-val" id="stat-scams">3</div>
+          <div class="stat-label">Quarantined Scams</div>
+        </div>
+      </div>
+
+      <div class="stat-tile warning glass-panel">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-meta">
+          <div class="stat-val" id="stat-followups">4</div>
+          <div class="stat-label">&ge;7d Stale Pipelines</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Critical Scam Banner -->
+    <section class="scam-banner" id="global-scam-alert-banner">
+      <div class="scam-banner-content">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Security Warning: 3 High-Severity Fraud Attempts Quarantined
+        </h3>
+        <p style="color: #fca5a5;">
+          Advance-fee wire solicitations, fraudulent equipment deposits, and premature Aadhaar/PAN identity harvesting attacks impersonating Microsoft, AWS, and Google have been blocked.
+        </p>
+      </div>
+      <button class="btn btn-danger" onclick="document.querySelector('[data-target=\'tab-scams\']').click()">
+        Inspect Threats
+      </button>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-container">
+      <button class="tab-btn active" data-target="tab-kanban" id="tab-btn-kanban">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Application Pipeline (Kanban)
+      </button>
+
+      <button class="tab-btn" data-target="tab-scams" id="tab-btn-scams">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Scam &amp; Phishing Radar
+        <span class="tab-badge" id="tab-scam-count">3</span>
+      </button>
+
+      <button class="tab-btn" data-target="tab-followup" id="tab-btn-followup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        7-Day Follow-Up Queue
+        <span class="tab-badge" id="followup-queue-badge">4</span>
+      </button>
+
+      <button class="tab-btn" data-target="tab-interview" id="tab-btn-interview">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Interview Prep (OpenAI)
+      </button>
+
+      <button class="tab-btn" data-target="tab-sandbox" id="tab-btn-sandbox">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Live Security Sandbox
+      </button>
+
+      <button class="tab-btn" data-target="tab-inbox" id="tab-btn-inbox">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        Raw Ingestion Feed
+      </button>
+    </nav>
+
+    <!-- Tab 1: Kanban Pipeline -->
+    <main class="tab-content" id="tab-kanban">
+      <div class="kanban-controls">
+        <div class="kanban-search-box">
+          <input type="text" class="input-control" id="kanban-search-input" placeholder="Search company or role...">
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <label style="font-size: 0.85rem; color: var(--text-muted);">Stage Filter:</label>
+          <select class="input-control" id="kanban-filter-select" style="width: auto;">
+            <option value="ALL">All Stages</option>
+            <option value="APPLIED">Applied</option>
+            <option value="SCREEN_TECH">Screen / Tech</option>
+            <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+            <option value="OFFER_EXTENDED">Offer Extended</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kanban-board">
+        <!-- Column 1: Applied -->
+        <div class="kanban-column" id="col-applied">
+          <div class="column-header">
+            <span class="column-title" style="color: #cbd5e1;">Applied</span>
+            <span class="column-count" id="count-applied">0</span>
+          </div>
+          <div class="column-body" id="col-applied-list"></div>
+        </div>
+
+        <!-- Column 2: Screen / Tech -->
+        <div class="kanban-column" id="col-screen">
+          <div class="column-header">
+            <span class="column-title" style="color: #c084fc;">Screen / Tech</span>
+            <span class="column-count" id="count-screen">0</span>
+          </div>
+          <div class="column-body" id="col-screen-list"></div>
+        </div>
+
+        <!-- Column 3: Interview Scheduled -->
+        <div class="kanban-column" id="col-interview">
+          <div class="column-header">
+            <span class="column-title" style="color: #38bdf8;">Interview Scheduled</span>
+            <span class="column-count" id="count-interview">0</span>
+          </div>
+          <div class="column-body" id="col-interview-list"></div>
+        </div>
+
+        <!-- Column 4: Offer Extended -->
+        <div class="kanban-column" id="col-offer">
+          <div class="column-header">
+            <span class="column-title" style="color: #34d399;">Offer Extended</span>
+            <span class="column-count" id="count-offer">0</span>
+          </div>
+          <div class="column-body" id="col-offer-list"></div>
+        </div>
+
+        <!-- Column 5: Rejected -->
+        <div class="kanban-column" id="col-rejected">
+          <div class="column-header">
+            <span class="column-title" style="color: #f87171;">Rejected</span>
+            <span class="column-count" id="count-rejected">0</span>
+          </div>
+          <div class="column-body" id="col-rejected-list"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Tab 2: Scam & Phishing Radar -->
+    <section class="tab-content" id="tab-scams" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.4rem;">Scam &amp; Phishing Red-Flag Alert Center</h2>
+        <p>Deterministic analysis of spoofed domains, financial solicitations, and premature government document extortion.</p>
+      </div>
+
+      <div class="scam-grid" id="scam-radar-grid"></div>
+
+      <!-- Fraud Defense Principles -->
+      <div class="glass-panel" style="padding: 1.75rem; margin-top: 2rem;">
+        <h3 style="margin-bottom: 0.75rem; color: #ffffff;">How CareerGuard Protects Job Seekers</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+          <div>
+            <h4 style="color: var(--primary-cyan); font-size: 1rem; margin-bottom: 0.35rem;">1. Free-mail Enterprise Check</h4>
+            <p style="font-size: 0.85rem;">Legitimate recruiters from Microsoft, Amazon, or Google will never use @gmail.com, @outlook.com, or @yahoo.com for official candidate outreach.</p>
+          </div>
+          <div>
+            <h4 style="color: #f87171; font-size: 1rem; margin-bottom: 0.35rem;">2. Zero Financial Solicitations</h4>
+            <p style="font-size: 0.85rem;">Real employers NEVER charge onboarding fees, equipment courier costs, or software training license payments. Any wire/deposit request is advance-fee fraud.</p>
+          </div>
+          <div>
+            <h4 style="color: #fbbf24; font-size: 1rem; margin-bottom: 0.35rem;">3. Identity Shielding</h4>
+            <p style="font-size: 0.85rem;">Demands for Aadhaar, PAN, SSN, or passport scans before formal interview stages or secure HR portal enrollment are criminal identity theft attempts.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: 7-Day Follow-Up Queue -->
+    <section class="tab-content" id="tab-followup" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.4rem;">7-Day Inactivity Follow-Up Radar</h2>
+        <p>Prioritized candidates in APPLIED status with &ge; 7 days of silence relative to today (Oct 24, 2026).</p>
+      </div>
+
+      <div class="radar-grid">
+        <!-- Inactive Applications Table -->
+        <div class="glass-panel" style="padding: 1.5rem;">
+          <h3 style="margin-bottom: 1rem; font-size: 1.15rem;">Stale Pipeline Radar (&ge; 7 Days Silent)</h3>
+          <table class="radar-table">
+            <thead>
+              <tr>
+                <th>Priority</th>
+                <th>Company</th>
+                <th>Target Role</th>
+                <th>Applied Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="followup-table-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Follow-Up Email Generator -->
+        <div class="email-preview-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 1.15rem; color: #ffffff;">Outreach Message Generator</h3>
+            <span class="badge badge-info">Smart Tone AI</span>
+          </div>
+
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Target Pipeline:</label>
+              <select class="input-control" id="followup-target-select" style="margin-top: 0.3rem;"></select>
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+              <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Outreach Tone:</label>
+              <select class="input-control" id="followup-tone-select" style="margin-top: 0.3rem;">
+                <option value="leverage">Executive Leverage (Recommended)</option>
+                <option value="standard">Standard Professional</option>
+                <option value="concise">Concise &amp; Direct</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 0.6rem 0.85rem; border-radius: 6px;">
+            <input type="checkbox" id="toggle-offer-leverage" checked style="accent-color: var(--primary-cyan); width: 16px; height: 16px;">
+            <label for="toggle-offer-leverage" style="font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+              Include competing offer leverage (Canva Senior Engineer offer)
+            </label>
+          </div>
+
+          <div>
+            <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Subject Line:</label>
+            <input type="text" class="input-control" id="email-subject-preview" style="margin-top: 0.3rem;" readonly>
+          </div>
+
+          <div>
+            <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Generated Email Body:</label>
+            <textarea class="email-body-textarea" id="email-body-preview" style="margin-top: 0.3rem;"></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="btn btn-primary" id="btn-copy-followup">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Message to Clipboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Interview Prep Briefing -->
+    <section class="tab-content" id="tab-interview" style="display: none;">
+      <div class="interview-hero">
+        <div>
+          <span class="badge badge-success" style="margin-bottom: 0.5rem;">Earliest Upcoming Round</span>
+          <h2 style="font-size: 1.8rem; margin: 0.2rem 0;">OpenAI &bull; Research Engineer</h2>
+          <p style="color: #cbd5e1; font-size: 0.95rem;">
+            Round: <strong>System Architecture</strong> &bull; Tuesday, Oct 27, 2026 @ 2:00 PM PST via Google Meet
+          </p>
+        </div>
+
+        <div class="countdown-box">
+          <div class="timer-segment">
+            <div class="timer-number" id="timer-days">02</div>
+            <div class="timer-label">Days</div>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <div class="timer-number" id="timer-hours">20</div>
+            <div class="timer-label">Hours</div>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <div class="timer-number" id="timer-mins">41</div>
+            <div class="timer-label">Mins</div>
+          </div>
+          <div class="timer-colon">:</div>
+          <div class="timer-segment">
+            <div class="timer-number" id="timer-secs">11</div>
+            <div class="timer-label">Secs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Knowledge Pillars -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="glass-panel" style="padding: 1.5rem;">
+          <h3 style="color: var(--primary-cyan); font-size: 1.1rem; margin-bottom: 0.5rem;">1. Distributed Memory &amp; Sharding</h3>
+          <p style="font-size: 0.85rem; line-height: 1.5;">
+            Master Megatron-LM tensor and pipeline parallelism, DeepSpeed ZeRO-1/2/3 partitioning (optimizer state, gradient, and parameter sharding), and PyTorch Fully Sharded Data Parallel (FSDP).
+          </p>
+        </div>
+
+        <div class="glass-panel" style="padding: 1.5rem;">
+          <h3 style="color: #34d399; font-size: 1.1rem; margin-bottom: 0.5rem;">2. Low-Latency Inference (vLLM)</h3>
+          <p style="font-size: 0.85rem; line-height: 1.5;">
+            Be ready to articulate PagedAttention (virtual memory management for KV cache), FlashAttention-2/3 (GPU SRAM IO-awareness), Continuous Batching, and Speculative Decoding throughput gains.
+          </p>
+        </div>
+
+        <div class="glass-panel" style="padding: 1.5rem;">
+          <h3 style="color: #c084fc; font-size: 1.1rem; margin-bottom: 0.5rem;">3. Fault Tolerance &amp; Checkpointing</h3>
+          <p style="font-size: 0.85rem; line-height: 1.5;">
+            High-speed asynchronous distributed checkpointing, InfiniBand multi-rail topologies with RoCEv2, and straggler node identification across multi-thousand GPU clusters.
+          </p>
+        </div>
+      </div>
+
+      <!-- Practice Questions Flashcards -->
+      <h3 style="margin-bottom: 1rem; color: #ffffff;">Interactive System Architecture Simulator (Click to Reveal Model Answers)</h3>
+      <div class="flashcards-container">
+        <!-- Card 1 -->
+        <div class="flashcard">
+          <div class="flashcard-question">
+            <span>Q1: Multi-Tenant Inference at 50,000 QPS</span>
+            <span class="toggle-icon" style="margin-left: auto; color: var(--primary-cyan);">▼</span>
+          </div>
+          <div class="flashcard-answer">
+            <p><strong>Design Prompt:</strong> Architect a multi-tenant inference system serving a 70B parameter model at 50k QPS with p99 TTFT &lt; 150ms.</p>
+            <ul style="margin: 0.5rem 0 0 1.5rem; font-size: 0.85rem; color: #94a3b8;">
+              <li><strong>Model Partitioning:</strong> Tensor Parallelism across 4x or 8x H100 GPUs (NVLink interconnect).</li>
+              <li><strong>KV Cache Management:</strong> PagedAttention with prefix caching for common system prompts to avoid redundant prefill passes.</li>
+              <li><strong>Request Scheduling:</strong> Iteration-level continuous batching with priority queues and token bucket rate limiters per tenant.</li>
+              <li><strong>Speculative Decoding:</strong> Pair with a 3B draft model on smaller auxiliary GPUs to achieve a 2.3x speedup on token emission.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="flashcard">
+          <div class="flashcard-question">
+            <span>Q2: InfiniBand Fabric Straggler Isolation across 4,096 GPUs</span>
+            <span class="toggle-icon" style="margin-left: auto; color: var(--primary-cyan);">▼</span>
+          </div>
+          <div class="flashcard-answer">
+            <p><strong>Scenario:</strong> All-Reduce operations intermittently stall during 3D-parallel training across 4,096 GPUs.</p>
+            <ul style="margin: 0.5rem 0 0 1.5rem; font-size: 0.85rem; color: #94a3b8;">
+              <li><strong>Metric Telemetry:</strong> Correlate NCCL trace events (e.g., `ncclAllReduce` ring times) with hardware counters via DCGM (NVIDIA Data Center GPU Manager).</li>
+              <li><strong>Hardware Inspection:</strong> Check for thermal clock throttling, PCIe replay errors, and RoCE PFC (Priority Flow Control) pause frames or dropped packets on specific switches.</li>
+              <li><strong>Health Checks:</strong> Execute peer-to-peer bandwidth benchmarks (NCCL tests) in an isolated ring before scheduling batch steps.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="flashcard">
+          <div class="flashcard-question">
+            <span>Q3: 100TB/Day Streaming Multi-Modal Ingestion &amp; Deduplication</span>
+            <span class="toggle-icon" style="margin-left: auto; color: var(--primary-cyan);">▼</span>
+          </div>
+          <div class="flashcard-answer">
+            <p><strong>Architecture:</strong> Fault-tolerant streaming token ingestion without GPU dataloader starvation.</p>
+            <ul style="margin: 0.5rem 0 0 1.5rem; font-size: 0.85rem; color: #94a3b8;">
+              <li><strong>Deduplication Pipeline:</strong> Distributed MinHash LSH (Locality Sensitive Hashing) against bloom filters stored in high-throughput NVMe/Redis clusters.</li>
+              <li><strong>Sharded Tokenizer:</strong> Decouple Rust-based tokenizers into CPU worker pools writing to pre-sharded memory-mapped Arrow / Parquet chunks.</li>
+              <li><strong>Prefetch Buffer:</strong> Double-buffered shared memory ring on GPU hosts with asynchronous CUDA streams to ensure zero compute idle time.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reverse Interview Questions -->
+      <div class="glass-panel" style="padding: 1.5rem; margin-top: 2rem;">
+        <h3 style="color: #ffffff; margin-bottom: 0.75rem;">Strategic Reverse-Interview Questions to Ask the OpenAI Team</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="background: rgba(0,0,0,0.3); padding: 0.85rem 1rem; border-radius: 6px;">
+            <strong>Question 1:</strong>
+            <p style="margin-top: 0.25rem; font-style: italic; color: #cbd5e1;">"How does the infrastructure team balance raw compute utilization against rapid experimentation velocity when research teams need to dynamically alter parallelization topologies on shared clusters?"</p>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 0.85rem 1rem; border-radius: 6px;">
+            <strong>Question 2:</strong>
+            <p style="margin-top: 0.25rem; font-style: italic; color: #cbd5e1;">"With the growing shift toward agentic workloads and long-running context streams, how are your systems evolving to handle KV-cache persistence across multi-turn reasoning workflows?"</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 5: Live Security Sandbox -->
+    <section class="tab-content" id="tab-sandbox" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.4rem;">Live Email Scam &amp; Phishing Scanner Sandbox</h2>
+        <p>Test suspicious recruitment emails in real time with our heuristic security analyzer.</p>
+      </div>
+
+      <div class="sandbox-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+          <h3 style="font-size: 1.15rem; color: #ffffff;">Email Security Analyzer</h3>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-size: 0.85rem; color: var(--text-dim);">Load Scenario Preset:</label>
+            <select class="input-control" id="sandbox-preset-select" style="width: auto;">
+              <option value="msft">Preset: Microsoft $250 Wire Scam</option>
+              <option value="aws">Preset: AWS Aadhaar/PAN Harvest</option>
+              <option value="google">Preset: Google $180 Shipping Deposit</option>
+              <option value="clean">Preset: Clean OpenAI Confirmation</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <!-- Inputs -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Sender Address:</label>
+              <input type="text" class="input-control" id="sandbox-sender" value="msft-recruitment-hr@gmail.com" style="margin-top: 0.3rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Subject Line:</label>
+              <input type="text" class="input-control" id="sandbox-subject" value="Immediate Job Offer: Senior Cloud Architect" style="margin-top: 0.3rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Email Body Content:</label>
+              <textarea class="email-body-textarea" id="sandbox-body" style="height: 140px; margin-top: 0.3rem;">Congratulations! You are selected for Microsoft Azure Cloud Architect. To confirm your placement, wire a $250 mandatory onboarding training module fee to our partner account.</textarea>
+            </div>
+            <button class="btn btn-primary" id="btn-sandbox-scan">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Execute Security Analysis
+            </button>
+          </div>
+
+          <!-- Gauge Output -->
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="gauge-meter-wrapper">
+              <div class="gauge-circle" id="gauge-circle-outer">
+                <div class="gauge-circle-inner">
+                  <div class="gauge-score" id="gauge-score-val">5</div>
+                  <div class="gauge-text">Trust Score</div>
+                </div>
+              </div>
+              <div>
+                <h4 id="sandbox-verdict-title" style="font-size: 1.15rem; margin-bottom: 0.35rem;">CRITICAL THREAT DETECTED</h4>
+                <p id="sandbox-verdict-desc" style="font-size: 0.85rem; color: #cbd5e1;">Advance-Fee wire solicitation and consumer freemail impersonation.</p>
+              </div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-top: 1rem;">
+              <h4 style="font-size: 0.9rem; color: #ffffff; margin-bottom: 0.5rem;">Detected Security Violations:</h4>
+              <ul class="scam-signals" id="sandbox-violations-list"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 6: Raw Inbox Feed -->
+    <section class="tab-content" id="tab-inbox" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.4rem;">Raw Inbox Ingestion Stream (20 Emails)</h2>
+        <p>Deterministic parsing audit trail for all inbound communications received from Oct 10 to Oct 24, 2026.</p>
+      </div>
+
+      <div class="raw-feed-list" id="raw-inbox-list"></div>
+    </section>
+
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-backdrop" id="app-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title" style="font-size: 1.2rem;">Inspection Detail</h3>
+        <button class="btn btn-ghost btn-sm" id="btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body-content"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="document.getElementById('app-modal').classList.remove('open')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Bootstrap Modules -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
