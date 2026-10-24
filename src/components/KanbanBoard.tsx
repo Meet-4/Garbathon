@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { Application, CanonicalStage } from '../types';
+import { ProcessedApplication, ApplicationStage } from '../types';
 import { Search, Filter, Calendar, ExternalLink } from 'lucide-react';
 
 interface KanbanBoardProps {
-  applications: Application[];
-  onStageChange: (appId: string, newStage: CanonicalStage) => void;
-  onSelectApp: (app: Application) => void;
+  applications: ProcessedApplication[];
+  onStageChange: (appId: string, newStage: ApplicationStage) => void;
+  onSelectApp: (app: ProcessedApplication) => void;
 }
 
-const STAGES: { id: CanonicalStage; title: string; color: string; badgeColor: string }[] = [
+const STAGES: { id: ApplicationStage; title: string; color: string; badgeColor: string }[] = [
   { id: 'APPLIED', title: 'Applied', color: 'text-slate-300 border-slate-700', badgeColor: 'bg-slate-800 text-slate-300 border-slate-700' },
-  { id: 'SCREEN_TECH', title: 'Screen / Tech', color: 'text-purple-300 border-purple-500/30', badgeColor: 'bg-purple-950/60 text-purple-300 border-purple-500/30' },
+  { id: 'ASSESSMENT_OR_SCREEN', title: 'Screen / Tech', color: 'text-purple-300 border-purple-500/30', badgeColor: 'bg-purple-950/60 text-purple-300 border-purple-500/30' },
   { id: 'INTERVIEW_SCHEDULED', title: 'Interview Set', color: 'text-cyan-300 border-cyan-500/30', badgeColor: 'bg-cyan-950/60 text-cyan-300 border-cyan-500/30' },
   { id: 'OFFER_EXTENDED', title: 'Offer Extended', color: 'text-emerald-300 border-emerald-500/30', badgeColor: 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30' },
   { id: 'REJECTED', title: 'Rejected', color: 'text-rose-300 border-rose-500/30', badgeColor: 'bg-rose-950/60 text-rose-300 border-rose-500/30' },
@@ -20,14 +20,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ applications, onStageC
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('ALL');
 
+  // Filter legitimate applications only (quarantined threats go to Scam Radar)
+  const legitimateApps = useMemo(() => {
+    return applications.filter((app) => !app.threatAssessment.isSuspicious);
+  }, [applications]);
+
   const filteredApps = useMemo(() => {
-    return applications.filter((app) => {
+    return legitimateApps.filter((app) => {
       const q = search.toLowerCase();
-      const matchesSearch = app.company.toLowerCase().includes(q) || app.role.toLowerCase().includes(q);
+      const matchesSearch = app.companyName.toLowerCase().includes(q) || app.roleTitle.toLowerCase().includes(q);
       const matchesStage = stageFilter === 'ALL' || app.stage === stageFilter;
       return matchesSearch && matchesStage;
     });
-  }, [applications, search, stageFilter]);
+  }, [legitimateApps, search, stageFilter]);
 
   return (
     <div className="space-y-6">
@@ -52,9 +57,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ applications, onStageC
             onChange={(e) => setStageFilter(e.target.value)}
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
           >
-            <option value="ALL">All Stages ({applications.length})</option>
+            <option value="ALL">All Stages ({legitimateApps.length})</option>
             <option value="APPLIED">Applied</option>
-            <option value="SCREEN_TECH">Screen / Tech</option>
+            <option value="ASSESSMENT_OR_SCREEN">Assessment or Screen</option>
             <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
             <option value="OFFER_EXTENDED">Offer Extended</option>
             <option value="REJECTED">Rejected</option>
@@ -97,7 +102,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ applications, onStageC
                     >
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <h4 className="font-bold text-sm text-white group-hover:text-cyan-400 transition">
-                          {app.company}
+                          {app.companyName}
                         </h4>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${col.badgeColor}`}>
                           {col.title}
@@ -105,30 +110,30 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ applications, onStageC
                       </div>
 
                       <div className="text-xs text-cyan-400/90 font-medium mb-2">
-                        {app.role}
+                        {app.roleTitle}
                       </div>
 
                       <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-2">
                         <Calendar className="w-3 h-3 text-slate-500" />
-                        <span>{app.lastDate}</span>
-                        <span className={`font-semibold ${app.daysElapsed >= 7 && app.stage === 'APPLIED' ? 'text-rose-400' : 'text-slate-500'}`}>
-                          ({app.daysElapsed}d ago)
+                        <span>{new Date(app.lastContactDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <span className={`font-semibold ${app.isNeedsFollowUp ? 'text-rose-400' : 'text-slate-500'}`}>
+                          ({app.daysInactive}d ago)
                         </span>
                       </div>
 
                       <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed italic bg-slate-950/40 p-2 rounded border border-slate-800/50">
-                        "{app.snippet}"
+                        "{app.rawEmail.body}"
                       </p>
 
                       <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800/80 gap-2">
                         <select
                           value={app.stage}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => onStageChange(app.id, e.target.value as CanonicalStage)}
+                          onChange={(e) => onStageChange(app.id, e.target.value as ApplicationStage)}
                           className="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500"
                         >
                           <option value="APPLIED">Applied</option>
-                          <option value="SCREEN_TECH">Screen/Tech</option>
+                          <option value="ASSESSMENT_OR_SCREEN">Assessment/Screen</option>
                           <option value="INTERVIEW_SCHEDULED">Interview</option>
                           <option value="OFFER_EXTENDED">Offer</option>
                           <option value="REJECTED">Rejected</option>

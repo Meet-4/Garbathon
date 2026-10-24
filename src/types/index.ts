@@ -1,59 +1,59 @@
-export type CanonicalStage =
-  | 'APPLIED'
-  | 'SCREEN_TECH'
-  | 'INTERVIEW_SCHEDULED'
-  | 'OFFER_EXTENDED'
-  | 'REJECTED'
-  | 'SCAM_QUARANTINED';
+export type ThreatType = 
+  | 'ADVANCE_FEE_SCAM' 
+  | 'FREEMAIL_IMPERSONATION' 
+  | 'PREMATURE_IDENTITY_EXTRACTION';
 
-export interface SecurityViolation {
-  rule: string;
-  severity: 'CRITICAL' | 'HIGH' | 'WARNING';
-  desc: string;
+export interface ThreatAnalysis {
+  isSuspicious: boolean;
+  threatTypes: ThreatType[];
+  reasons: string[];
+  riskScore: number; // 0 to 100
 }
 
-export interface EmailAnalysis {
-  emailId: number;
-  isScam: boolean;
-  riskLevel: 'SAFE' | 'WARNING' | 'CRITICAL';
-  trustScore: number;
-  threatType: string | null;
-  violations: SecurityViolation[];
-  stage: CanonicalStage;
-}
+export type ApplicationStage = 
+  | 'APPLIED' 
+  | 'ASSESSMENT_OR_SCREEN' 
+  | 'INTERVIEW_SCHEDULED' 
+  | 'OFFER_EXTENDED' 
+  | 'REJECTED';
 
 export interface RawEmail {
-  id: number;
-  date: string;
-  dateIso: string;
-  sender: string;
+  id: string;
+  senderEmail: string;
+  senderName: string;
   subject: string;
   body: string;
-  company: string;
-  role: string;
+  receivedDate: string; // ISO 8601 string
 }
 
-export interface AnalyzedEmail extends RawEmail {
-  analysis: EmailAnalysis;
-}
-
-export interface Application {
+export interface ProcessedApplication {
   id: string;
-  company: string;
-  role: string;
-  stage: CanonicalStage;
-  lastDate: string;
-  dateIso: string;
-  daysElapsed: number;
-  snippet: string;
-  sender: string;
-  emailThread: AnalyzedEmail[];
+  companyName: string;
+  roleTitle: string;
+  stage: ApplicationStage;
+  lastContactDate: string;
+  daysInactive: number;
+  isNeedsFollowUp: boolean;
+  threatAssessment: ThreatAnalysis;
+  rawEmail: RawEmail;
+  emailHistory?: RawEmail[];
 }
 
-export interface FollowUpItem {
+export interface FollowUpTask {
+  applicationId: string;
+  companyName: string;
+  roleTitle: string;
+  recipientEmail: string;
+  daysElapsed: number;
+  generatedSubject: string;
+  generatedBody: string;
+}
+
+export interface InterviewBrief {
   company: string;
   role: string;
-  appliedDate: string;
-  daysElapsed: number;
-  priority: 'P1' | 'P2' | 'P3' | 'P4';
+  interviewDate: string;
+  technicalTopics: string[];
+  deepDiveQuestions: string[];
+  reverseInterviewQuestions: string[];
 }

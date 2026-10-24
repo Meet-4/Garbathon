@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Clock, ChevronDown, ChevronUp, Cpu, Server, Database, MessageSquare } from 'lucide-react';
+import { InterviewBrief } from '../types';
+import { Target, ChevronDown, ChevronUp, Cpu, Server, Database, MessageSquare } from 'lucide-react';
 
-export const InterviewPrep: React.FC = () => {
+interface InterviewPrepProps {
+  brief?: InterviewBrief | null;
+}
+
+export const InterviewPrep: React.FC<InterviewPrepProps> = ({ brief }) => {
   // Tuesday, Oct 27, 2026 at 2:00 PM PST
-  const targetDate = new Date('2026-10-27T14:00:00-08:00');
+  const targetDate = new Date(brief?.interviewDate || '2026-10-27T14:00:00-08:00');
 
   const [timeLeft, setTimeLeft] = useState({
     days: 2,
@@ -30,11 +35,14 @@ export const InterviewPrep: React.FC = () => {
     };
 
     updateCountdown();
-  }, []);
+  }, [targetDate]);
 
   const toggleCard = (index: number) => {
     setOpenCard(openCard === index ? null : index);
   };
+
+  const company = brief?.company || 'OpenAI';
+  const role = brief?.role || 'Research Engineer';
 
   return (
     <div className="space-y-8">
@@ -43,10 +51,10 @@ export const InterviewPrep: React.FC = () => {
         <div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
             <Target className="w-3.5 h-3.5" />
-            Earliest Upcoming Interview
+            Confirmed Interview Briefing
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-1">
-            OpenAI &bull; Research Engineer
+            {company} &bull; {role}
           </h2>
           <p className="text-sm text-slate-300 mt-1 font-medium">
             Round: <span className="text-cyan-400 font-semibold">System Architecture</span> &bull; Tuesday, Oct 27, 2026 @ 2:00 PM PST via Google Meet

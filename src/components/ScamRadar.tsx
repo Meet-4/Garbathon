@@ -1,14 +1,14 @@
 import React from 'react';
-import { AnalyzedEmail } from '../types';
+import { ProcessedApplication } from '../types';
 import { ShieldAlert, AlertTriangle, ShieldCheck, FileWarning, Lock } from 'lucide-react';
 
 interface ScamRadarProps {
-  scamEmails: AnalyzedEmail[];
-  onQuarantine: (email: AnalyzedEmail) => void;
-  onGenerateDefense: (email: AnalyzedEmail) => void;
+  scamApplications: ProcessedApplication[];
+  onQuarantine: (app: ProcessedApplication) => void;
+  onGenerateDefense: (app: ProcessedApplication) => void;
 }
 
-export const ScamRadar: React.FC<ScamRadarProps> = ({ scamEmails, onQuarantine, onGenerateDefense }) => {
+export const ScamRadar: React.FC<ScamRadarProps> = ({ scamApplications, onQuarantine, onGenerateDefense }) => {
   return (
     <div className="space-y-8">
       <div>
@@ -23,41 +23,46 @@ export const ScamRadar: React.FC<ScamRadarProps> = ({ scamEmails, onQuarantine, 
 
       {/* Threats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {scamEmails.map((email) => (
+        {scamApplications.map((app) => (
           <div
-            key={email.id}
+            key={app.id}
             className="p-5 rounded-xl bg-slate-900/90 border border-rose-500/40 shadow-lg shadow-rose-950/20 flex flex-col justify-between hover:border-rose-500/70 transition"
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
-                  <h3 className="font-bold text-base text-white">{email.company}</h3>
+                  <h3 className="font-bold text-base text-white">{app.companyName}</h3>
                   <span className="font-mono text-xs text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 inline-block mt-1">
-                    {email.sender}
+                    {app.rawEmail.senderEmail}
                   </span>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-[10px] font-bold uppercase tracking-wider shrink-0">
-                  CRITICAL THREAT
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                    CRITICAL THREAT
+                  </span>
+                  <span className="text-[10px] text-rose-300 font-mono font-bold">
+                    Risk: {app.threatAssessment.riskScore}/100
+                  </span>
+                </div>
               </div>
 
               <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5 mb-2.5">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{email.analysis.threatType || 'Fraudulent Recruitment Vector'}</span>
+                <span>{app.threatAssessment.threatTypes.join(' &bull; ')}</span>
               </div>
 
               <blockquote className="text-xs text-slate-300 italic bg-slate-950/70 p-3 rounded-lg border-l-2 border-rose-500 mb-4 leading-relaxed font-mono">
-                "{email.body}"
+                "{app.rawEmail.body}"
               </blockquote>
 
               <div className="space-y-1.5 mb-5">
                 <div className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
                   Deterministic Violations:
                 </div>
-                {email.analysis.violations.map((v, i) => (
+                {app.threatAssessment.reasons.map((reason, i) => (
                   <div key={i} className="text-xs text-slate-300 flex items-start gap-1.5 leading-snug">
                     <span className="text-rose-400 font-bold shrink-0">✕</span>
-                    <span>{v.desc}</span>
+                    <span>{reason}</span>
                   </div>
                 ))}
               </div>
@@ -65,13 +70,13 @@ export const ScamRadar: React.FC<ScamRadarProps> = ({ scamEmails, onQuarantine, 
 
             <div className="pt-4 border-t border-slate-800 flex items-center gap-2">
               <button
-                onClick={() => onQuarantine(email)}
+                onClick={() => onQuarantine(app)}
                 className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition"
               >
                 Quarantine Sender
               </button>
               <button
-                onClick={() => onGenerateDefense(email)}
+                onClick={() => onGenerateDefense(app)}
                 className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
               >
                 IC3 Legal Notice

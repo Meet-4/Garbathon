@@ -1,7 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { MOCK_RAW_EMAILS } from './data/mockEmails';
-import { analyzeEmail } from './services/heuristics';
-import { AnalyzedEmail, Application, CanonicalStage } from './types';
+import { RAW_EMAILS_DATA } from './data/mockEmails';
+import { processRawEmails } from './services/pipelineEngine';
+import { generateFollowUpQueue } from './services/followUpEngine';
+import { getUpcomingInterviewBrief } from './services/interviewEngine';
+import {
+  downloadJsonFile,
+  downloadCsvFile,
+  buildVerifiedExportPayload,
+  buildApplicationsCsv
+} from './services/exportEngine';
+import { ProcessedApplication, ApplicationStage, RawEmail, ThreatAnalysis } from './types';
 import { Header } from './components/Header';
 import { StatsOverview } from './components/StatsOverview';
 import { ScamAlertBanner } from './components/ScamAlertBanner';
@@ -15,160 +23,49 @@ import { DetailModal } from './components/DetailModal';
 import { LayoutGrid, ShieldAlert, Clock, GraduationCap, PlayCircle, Inbox } from 'lucide-react';
 
 export const App: React.FC = () => {
-  // Analyze all 20 mock raw emails deterministically
-  const analyzedEmails: AnalyzedEmail[] = useMemo(() => {
-    return MOCK_RAW_EMAILS.map((email) => {
-      const analysis = analyzeEmail(email);
-      return { ...email, analysis };
-    });
-  }, []);
+  // Ingest and process raw emails into applications
+  const [applications, setApplications] = useState<ProcessedApplication[]>(() => {
+    return processRawEmails(RAW_EMAILS_DATA);
+  });
 
-  // Consolidate into unique application pipelines
-  const initialApplications: Application[] = useMemo(() => {
-    const legitimate = analyzedEmails.filter((e) => !e.analysis.isScam);
-    const map = new Map<string, Application>();
-
-    legitimate.forEach((item) => {
-      const companyKey = item.company.toLowerCase();
-      const emailDate = new Date(item.dateIso);
-      const refDate = new Date('2026-10-24');
-      const diffTime = Math.abs(refDate.getTime() - emailDate.getTime());
-      const daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-      if (!map.has(companyKey)) {
-        map.set(companyKey, {
-          id: `app-${item.id}`,
-          company: item.company,
-          role: item.role,
-          stage: item.analysis.stage,
-          lastDate: item.date,
-          dateIso: item.dateIso,
-          daysElapsed,
-          snippet: item.body,
-          sender: item.sender,
-          emailThread: [item],
-        });
-      } else {
-        const existing = map.get(companyKey)!;
-        existing.emailThread.push(item);
-        if (new Date(item.dateIso) >= new Date(existing.dateIso)) {
-          existing.stage = item.analysis.stage;
-          existing.lastDate = item.date;
-          existing.dateIso = item.dateIso;
-          existing.daysElapsed = daysElapsed;
-          existing.snippet = item.body;
-        }
-      }
-    });
-
-    return Array.from(map.values());
-  }, [analyzedEmails]);
-
-  const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [activeTab, setActiveTab] = useState<'kanban' | 'scams' | 'followup' | 'interview' | 'sandbox' | 'inbox'>('kanban');
-  const [modalApp, setModalApp] = useState<Application | null>(null);
-  const [modalEmail, setModalEmail] = useState<AnalyzedEmail | null>(null);
-  const [defenseNoticeEmail, setDefenseNoticeEmail] = useState<AnalyzedEmail | null>(null);
+  const [modalApp, setModalApp] = useState<ProcessedApplication | null>(null);
+  const [modalRawEmailItem, setModalRawEmailItem] = useState<{ email: RawEmail; threat: ThreatAnalysis } | null>(null);
+  const [defenseNoticeApp, setDefenseNoticeApp] = useState<ProcessedApplication | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const scamEmails = useMemo(() => {
-    return analyzedEmails.filter((e) => e.analysis.isScam);
-  }, [analyzedEmails]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleStageChange = (appId: string, newStage: CanonicalStage) => {
+  // Derive counts & security metrics
+  const legitimateApps = useMemo(() => applications.filter((a) => !a.threatAssessment.isSuspicious), [applications]);
+  const scamApps = useMemo(() => applications.filter((a) => a.threatAssessment.isSuspicious), [applications]);
+  const activeOffers = useMemo(() => legitimateApps.filter((a) => a.stage === 'OFFER_EXTENDED').length, [legitimateApps]);
+  const staleFollowUps = useMemo(() => legitimateApps.filter((a) => a.isNeedsFollowUp).length, [legitimateApps]);
+
+  const interviewBrief = useMemo(() => getUpcomingInterviewBrief(applications), [applications]);
+  const followUpTasks = useMemo(() => generateFollowUpQueue(applications), [applications]);
+
+  const handleStageChange = (appId: string, newStage: ApplicationStage) => {
     setApplications((prev) =>
-      prev.map((a) => (a.id === appId ? { ...a, stage: newStage } : a))
+      prev.map((app) => (app.id === appId ? { ...app, stage: newStage, isNeedsFollowUp: newStage === 'APPLIED' && app.daysInactive >= 7 } : app))
     );
-    showToast(`Updated pipeline stage to ${newStage}`);
+    showToast(`Updated application stage to ${newStage}`);
   };
 
   const handleExportJson = () => {
-    const payload = {
-      generation_timestamp: new Date().toISOString(),
-      reference_date: '2026-10-24',
-      system_summary: {
-        total_emails: analyzedEmails.length,
-        legitimate_emails: analyzedEmails.filter((e) => !e.analysis.isScam).length,
-        unique_applications: applications.length,
-        scam_alerts_count: scamEmails.length,
-      },
-      scam_alerts: scamEmails.map((s) => ({
-        email_id: s.id,
-        claimed_company: s.company,
-        sender: s.sender,
-        threat_type: s.analysis.threatType,
-        red_flags: s.analysis.violations.map((v) => v.desc),
-        risk_level: s.analysis.riskLevel,
-      })),
-      tracker_board: {
-        OFFER_EXTENDED: applications.filter((a) => a.stage === 'OFFER_EXTENDED'),
-        INTERVIEW_SCHEDULED: applications.filter((a) => a.stage === 'INTERVIEW_SCHEDULED'),
-        SCREEN_TECH: applications.filter((a) => a.stage === 'SCREEN_TECH'),
-        APPLIED: applications.filter((a) => a.stage === 'APPLIED'),
-        REJECTED: applications.filter((a) => a.stage === 'REJECTED'),
-      },
-      pending_follow_ups: applications
-        .filter((a) => a.stage === 'APPLIED' && a.daysElapsed >= 7)
-        .map((a) => ({
-          company: a.company,
-          role: a.role,
-          applied_date: a.dateIso,
-          days_inactive: a.daysElapsed,
-        })),
-      interview_brief: {
-        company: 'OpenAI',
-        role: 'Research Engineer',
-        scheduled_timestamp: '2026-10-27T14:00:00-08:00',
-        round_type: 'System Architecture',
-        platform: 'Google Meet',
-        priority_domains: [
-          'Distributed Parallelism (Megatron-LM, ZeRO-3, FSDP)',
-          'Low-Latency Inference & PagedAttention (vLLM)',
-          'High-throughput Streaming Dataloading & Deduplication',
-        ],
-      },
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `careerguard_data_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Exported verified JSON dataset!');
+    const payload = buildVerifiedExportPayload(applications, RAW_EMAILS_DATA, interviewBrief, followUpTasks);
+    downloadJsonFile(payload, `careerguard_export_${new Date().toISOString().slice(0, 10)}.json`);
+    showToast('Exported verified production JSON dataset!');
   };
 
   const handleExportCsv = () => {
-    const headers = ['ID', 'Company', 'Role', 'Status', 'Last Date', 'Days Elapsed', 'Sender'];
-    const rows = applications.map((a) => [
-      a.id,
-      `"${a.company.replace(/"/g, '""')}"`,
-      `"${a.role.replace(/"/g, '""')}"`,
-      a.stage,
-      a.lastDate,
-      a.daysElapsed,
-      `"${a.sender.replace(/"/g, '""')}"`,
-    ]);
-
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `careerguard_applications_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Exported applications spreadsheet CSV!');
+    const csvContent = buildApplicationsCsv(applications);
+    downloadCsvFile(csvContent, `careerguard_applications_${new Date().toISOString().slice(0, 10)}.csv`);
+    showToast('Exported RFC-compliant applications CSV!');
   };
-
-  const activeOffers = useMemo(() => applications.filter((a) => a.stage === 'OFFER_EXTENDED').length, [applications]);
-  const staleFollowUps = useMemo(() => applications.filter((a) => a.stage === 'APPLIED' && a.daysElapsed >= 7).length, [applications]);
 
   return (
     <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
@@ -177,15 +74,15 @@ export const App: React.FC = () => {
 
       {/* Top Stats Overview */}
       <StatsOverview
-        totalEmails={analyzedEmails.length}
-        activePipelines={applications.length}
+        totalEmails={RAW_EMAILS_DATA.length}
+        activePipelines={legitimateApps.length}
         activeOffers={activeOffers}
-        quarantinedScams={scamEmails.length}
+        quarantinedScams={scamApps.length}
         staleFollowUps={staleFollowUps}
       />
 
       {/* Critical Alert Banner */}
-      <ScamAlertBanner scamCount={scamEmails.length} onInspect={() => setActiveTab('scams')} />
+      <ScamAlertBanner scamCount={scamApps.length} onInspect={() => setActiveTab('scams')} />
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-8 overflow-x-auto text-sm">
@@ -212,7 +109,7 @@ export const App: React.FC = () => {
           <ShieldAlert className="w-4 h-4" />
           <span>Scam Radar</span>
           <span className="px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-300 text-[11px] font-bold">
-            {scamEmails.length}
+            {scamApps.length}
           </span>
         </button>
 
@@ -280,9 +177,9 @@ export const App: React.FC = () => {
 
         {activeTab === 'scams' && (
           <ScamRadar
-            scamEmails={scamEmails}
-            onQuarantine={(email) => showToast(`Quarantined ${email.sender} & added to firewall blacklist.`)}
-            onGenerateDefense={(email) => setDefenseNoticeEmail(email)}
+            scamApplications={scamApps}
+            onQuarantine={(app) => showToast(`Quarantined ${app.rawEmail.senderEmail} & added to firewall blacklist.`)}
+            onGenerateDefense={(app) => setDefenseNoticeApp(app)}
           />
         )}
 
@@ -293,14 +190,14 @@ export const App: React.FC = () => {
           />
         )}
 
-        {activeTab === 'interview' && <InterviewPrep />}
+        {activeTab === 'interview' && <InterviewPrep brief={interviewBrief} />}
 
         {activeTab === 'sandbox' && <SecuritySandbox />}
 
         {activeTab === 'inbox' && (
           <RawInboxFeed
-            emails={analyzedEmails}
-            onInspectEmail={(email) => setModalEmail(email)}
+            rawEmails={RAW_EMAILS_DATA}
+            onInspectEmail={(email, threat) => setModalRawEmailItem({ email, threat })}
           />
         )}
       </main>
@@ -308,12 +205,12 @@ export const App: React.FC = () => {
       {/* Detail Modal */}
       <DetailModal
         app={modalApp}
-        email={modalEmail}
-        defenseNoticeEmail={defenseNoticeEmail}
+        rawEmailItem={modalRawEmailItem}
+        defenseNoticeApp={defenseNoticeApp}
         onClose={() => {
           setModalApp(null);
-          setModalEmail(null);
-          setDefenseNoticeEmail(null);
+          setModalRawEmailItem(null);
+          setDefenseNoticeApp(null);
         }}
       />
 

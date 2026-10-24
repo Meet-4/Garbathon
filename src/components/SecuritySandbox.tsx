@@ -1,87 +1,85 @@
 import React, { useState } from 'react';
-import { analyzeEmail } from '../services/heuristics';
-import { EmailAnalysis } from '../types';
+import { analyzeThreat } from '../services/securityEngine';
+import { ThreatAnalysis, RawEmail } from '../types';
 import { Shield, Play, ShieldAlert, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const PRESETS = {
   msft: {
-    sender: 'msft-recruitment-hr@gmail.com',
+    senderEmail: 'msft-recruitment-hr@gmail.com',
+    senderName: 'Microsoft HR Placement Desk',
     subject: 'Immediate Job Offer: Senior Cloud Architect',
     body: 'Congratulations! You are selected for Microsoft Azure Cloud Architect. To confirm your placement, wire a $250 mandatory onboarding training module fee to our partner account.',
-    company: 'Microsoft'
+    receivedDate: '2026-10-14T08:00:00Z',
   },
   aws: {
-    sender: 'amazon-hr-support@outlook.com',
+    senderEmail: 'amazon-hr-support@outlook.com',
+    senderName: 'AWS Hiring Support',
     subject: 'Direct Selection: Lead Architect',
     body: 'Your resume was shortlisted for AWS. Before we schedule an interview, reply with scanned copies of your Aadhaar and PAN card for initial verification.',
-    company: 'Amazon / AWS'
+    receivedDate: '2026-10-16T10:10:00Z',
   },
   google: {
-    sender: 'google-recruiting-desk@yahoo.com',
+    senderEmail: 'google-recruiting-desk@yahoo.com',
+    senderName: 'Google Cloud Services Recruiting',
     subject: 'Job Offer - Google Cloud Services',
     body: 'Selected candidate! Offer letter attached. Pay $180 equipment shipping & security deposit to begin home office delivery.',
-    company: 'Google'
+    receivedDate: '2026-10-21T07:45:00Z',
   },
   clean: {
-    sender: 'hiring@openai.com',
+    senderEmail: 'hiring@openai.com',
+    senderName: 'OpenAI Recruiting',
     subject: 'Technical Interview Confirmation: Research Engineer',
     body: 'Your system architecture round is scheduled for Tuesday, Oct 27, 2026 at 2:00 PM PST via Google Meet.',
-    company: 'OpenAI'
+    receivedDate: '2026-10-20T14:00:00Z',
   }
 };
 
 export const SecuritySandbox: React.FC = () => {
-  const [sender, setSender] = useState(PRESETS.msft.sender);
+  const [senderEmail, setSenderEmail] = useState(PRESETS.msft.senderEmail);
   const [subject, setSubject] = useState(PRESETS.msft.subject);
   const [body, setBody] = useState(PRESETS.msft.body);
-  const [result, setResult] = useState<EmailAnalysis>(() => {
-    return analyzeEmail({
-      id: 999,
-      date: 'Oct 24, 2026',
-      dateIso: '2026-10-24',
-      sender: PRESETS.msft.sender,
+  const [result, setResult] = useState<ThreatAnalysis>(() => {
+    return analyzeThreat({
+      id: 'test-1',
+      senderEmail: PRESETS.msft.senderEmail,
+      senderName: PRESETS.msft.senderName,
       subject: PRESETS.msft.subject,
       body: PRESETS.msft.body,
-      company: PRESETS.msft.company,
-      role: 'Test Candidate'
+      receivedDate: PRESETS.msft.receivedDate
     });
   });
 
   const handleRunScan = () => {
-    const analysis = analyzeEmail({
-      id: 999,
-      date: 'Oct 24, 2026',
-      dateIso: '2026-10-24',
-      sender: sender.trim() || 'candidate@unknown.com',
+    const analysis = analyzeThreat({
+      id: 'custom-scan',
+      senderEmail: senderEmail.trim() || 'candidate@unknown.com',
+      senderName: 'Recruiter',
       subject: subject.trim() || 'No Subject',
       body: body.trim(),
-      company: 'External Target',
-      role: 'Candidate'
+      receivedDate: new Date().toISOString()
     });
     setResult(analysis);
   };
 
   const loadPreset = (key: keyof typeof PRESETS) => {
     const p = PRESETS[key];
-    setSender(p.sender);
+    setSenderEmail(p.senderEmail);
     setSubject(p.subject);
     setBody(p.body);
-    const analysis = analyzeEmail({
-      id: 999,
-      date: 'Oct 24, 2026',
-      dateIso: '2026-10-24',
-      sender: p.sender,
+    const analysis = analyzeThreat({
+      id: `preset-${key}`,
+      senderEmail: p.senderEmail,
+      senderName: p.senderName,
       subject: p.subject,
       body: p.body,
-      company: p.company,
-      role: 'Candidate'
+      receivedDate: p.receivedDate
     });
     setResult(analysis);
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-400 border-emerald-500';
-    if (score >= 50) return 'text-amber-400 border-amber-500';
+    if (score <= 20) return 'text-emerald-400 border-emerald-500';
+    if (score <= 50) return 'text-amber-400 border-amber-500';
     return 'text-rose-500 border-rose-500';
   };
 
@@ -93,7 +91,7 @@ export const SecuritySandbox: React.FC = () => {
           Live Anti-Fraud Security Sandbox
         </h2>
         <p className="text-xs text-slate-400 mt-1">
-          Paste any incoming recruiter email header or message body to inspect its trust score and detect malicious recruitment vectors in real time.
+          Paste any incoming recruiter email header or message body to inspect its threat classification and risk score in real time.
         </p>
       </div>
 
@@ -123,8 +121,8 @@ export const SecuritySandbox: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={sender}
-                onChange={(e) => setSender(e.target.value)}
+                value={senderEmail}
+                onChange={(e) => setSenderEmail(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -166,23 +164,23 @@ export const SecuritySandbox: React.FC = () => {
           <div className="lg:col-span-5 flex flex-col justify-between p-5 rounded-xl bg-slate-950/70 border border-slate-800">
             <div>
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Trust Gauge</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Risk Assessment</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                  result.isScam ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  result.isSuspicious ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                 }`}>
-                  {result.riskLevel}
+                  {result.isSuspicious ? 'THREAT SUSPECT' : 'VERIFIED SAFE'}
                 </span>
               </div>
 
               {/* Score Display */}
               <div className="flex items-center gap-4 mb-5">
-                <div className={`w-20 h-20 rounded-full border-4 flex flex-col items-center justify-center shrink-0 ${getScoreColor(result.trustScore)}`}>
-                  <span className="text-2xl font-black font-display leading-none">{result.trustScore}</span>
-                  <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-0.5">/ 100</span>
+                <div className={`w-20 h-20 rounded-full border-4 flex flex-col items-center justify-center shrink-0 ${getScoreColor(result.riskScore)}`}>
+                  <span className="text-2xl font-black font-display leading-none">{result.riskScore}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-0.5">Risk Score</span>
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    {result.isScam ? (
+                    {result.isSuspicious ? (
                       <>
                         <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
                         <span className="text-rose-400">Critical Threat Quarantined</span>
@@ -195,9 +193,9 @@ export const SecuritySandbox: React.FC = () => {
                     )}
                   </h4>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    {result.isScam
-                      ? 'Violates core candidate protection rules. Message contains advance-fee solicitations or unauthorized PII harvesting.'
-                      : 'Syntax and sender origin correlate with verified talent acquisition infrastructure.'}
+                    {result.isSuspicious
+                      ? 'Violates core candidate protection rules. Contains advance-fee solicitations, freemail impersonation, or premature identity extraction.'
+                      : 'Sender domain authentication and syntax correlate with standard verified corporate recruiting.'}
                   </p>
                 </div>
               </div>
@@ -205,20 +203,20 @@ export const SecuritySandbox: React.FC = () => {
               {/* Violations List */}
               <div className="space-y-2">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Detected Violations ({result.violations.length}):
+                  Detected Reasons ({result.reasons.length}):
                 </div>
-                {result.violations.length === 0 ? (
+                {result.reasons.length === 0 ? (
                   <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                    <span>No heuristic triggers detected.</span>
+                    <span>No fraud heuristic triggers identified.</span>
                   </div>
                 ) : (
-                  result.violations.map((v, i) => (
+                  result.reasons.map((reason, i) => (
                     <div key={i} className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
                       <div>
-                        <span className="font-bold block text-[11px]">[{v.rule}]</span>
-                        <span className="text-slate-300 text-[11px] leading-snug">{v.desc}</span>
+                        <span className="font-bold block text-[11px]">{result.threatTypes[i] || 'VIOLATION'}</span>
+                        <span className="text-slate-300 text-[11px] leading-snug">{reason}</span>
                       </div>
                     </div>
                   ))

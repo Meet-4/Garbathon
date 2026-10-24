@@ -1,74 +1,35 @@
 import React, { useState, useMemo } from 'react';
-import { Application } from '../types';
-import { Clock, Send, Copy, Check, Sparkles, Building2 } from 'lucide-react';
+import { ProcessedApplication, FollowUpTask } from '../types';
+import { generateFollowUpQueue, generateFollowUpMessage, OutreachTone } from '../services/followUpEngine';
+import { Clock, Copy, Check, Sparkles, Building2 } from 'lucide-react';
 
 interface FollowUpQueueProps {
-  applications: Application[];
-  onSelectApp: (app: Application) => void;
+  applications: ProcessedApplication[];
+  onSelectApp: (app: ProcessedApplication) => void;
 }
 
 export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) => {
-  const staleApps = useMemo(() => {
-    return applications
-      .filter((a) => a.stage === 'APPLIED' && a.daysElapsed >= 7)
-      .sort((a, b) => b.daysElapsed - a.daysElapsed);
-  }, [applications]);
-
-  const [selectedAppId, setSelectedAppId] = useState<string>(staleApps[0]?.id || '');
-  const [tone, setTone] = useState<'leverage' | 'standard' | 'concise'>('leverage');
+  const [tone, setTone] = useState<OutreachTone>('leverage');
   const [includeLeverage, setIncludeLeverage] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
 
+  const followUpTasks: FollowUpTask[] = useMemo(() => {
+    return generateFollowUpQueue(applications, tone, '[Your Full Name]', includeLeverage);
+  }, [applications, tone, includeLeverage]);
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(followUpTasks[0]?.applicationId || '');
+
   const selectedApp = useMemo(() => {
-    return staleApps.find((a) => a.id === selectedAppId) || staleApps[0];
-  }, [staleApps, selectedAppId]);
+    return applications.find((a) => a.id === selectedTaskId) || applications.find((a) => a.isNeedsFollowUp);
+  }, [applications, selectedTaskId]);
 
-  const emailContent = useMemo(() => {
+  const currentMessage = useMemo(() => {
     if (!selectedApp) return { subject: '', body: '' };
-
-    const candidateName = '[Your Full Name]';
-    const company = selectedApp.company;
-    const role = selectedApp.role;
-    const dateStr = selectedApp.lastDate;
-
-    const subject = `Re: Application Status - ${role} - ${candidateName}`;
-    let body = `Hi ${company} Recruiting Team,\n\n`;
-
-    if (tone === 'concise') {
-      body += `I am following up on my application for the ${role} position submitted on ${dateStr}.\n\n`;
-      if (includeLeverage) {
-        body += `I am currently in active interview loops and recently received a competitive written offer from Canva, but remain particularly keen on ${company}'s team and technical challenges.\n\n`;
-      }
-      body += `Could you kindly share an update on the hiring timeline?\n\nThank you,\n${candidateName}\n[LinkedIn URL] | [Phone Number]`;
-      return { subject, body };
-    }
-
-    if (tone === 'standard') {
-      body += `I hope your week is going well.\n\n`;
-      body += `I wanted to follow up on my candidacy for the ${role} role, for which I submitted my profile on ${dateStr}. Given my experience designing resilient distributed systems, I am eager to explore how I can support ${company}'s upcoming milestones.\n\n`;
-      if (includeLeverage) {
-        body += `To be completely transparent with scheduling, I have advanced to late-stage discussions and received an official offer from Canva (Senior Engineer), but ${company} is a standout priority for me.\n\n`;
-      }
-      body += `I would love to learn if there are any updates or additional materials you need from my side.\n\nWarm regards,\n${candidateName}\n[LinkedIn URL] | [Phone Number]`;
-      return { subject, body };
-    }
-
-    // Default: Executive leverage
-    body += `I hope you are having a productive week.\n\n`;
-    body += `I am writing to check in on the review process for my ${role} application submitted on ${dateStr}. My background aligns directly with the core distributed infrastructure and backend reliability priorities at ${company}.\n\n`;
-    if (includeLeverage) {
-      body += `As an update on my job search timeline: I have recently received a written offer from Canva (Senior Engineer) with an acceptance window closing next week. However, because of ${company}'s engineering culture and technical domain, I would strongly prefer to explore opportunities with your team before finalizing my commitment.\n\n`;
-      body += `If your team is currently advancing candidates for this role, could we connect for a brief 15-minute sync early next week?\n\n`;
-    } else {
-      body += `Could you share if the team has completed initial screenings, and what the expected timeline is for the next round of decisions?\n\n`;
-    }
-    body += `Thank you for your time and guidance.\n\nBest regards,\n${candidateName}\n[LinkedIn Profile URL] | [Phone Number]`;
-
-    return { subject, body };
+    return generateFollowUpMessage(selectedApp, tone, '[Your Full Name]', includeLeverage);
   }, [selectedApp, tone, includeLeverage]);
 
   const handleCopy = () => {
-    const full = `Subject: ${emailContent.subject}\n\n${emailContent.body}`;
+    const full = `Subject: ${currentMessage.subject}\n\n${currentMessage.body}`;
     navigator.clipboard.writeText(full);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -90,19 +51,19 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
         {/* Table of Inactive Pipelines */}
         <div className="lg:col-span-5 p-5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center justify-between">
-            <span>Stale Pipelines Queue ({staleApps.length})</span>
+            <span>Stale Pipelines Queue ({followUpTasks.length})</span>
             <span className="text-[10px] text-amber-400 font-normal">Sorted by Days Silent</span>
           </h3>
 
           <div className="space-y-2.5">
-            {staleApps.map((app, idx) => {
+            {followUpTasks.map((task, idx) => {
               const priority = idx === 0 ? 'P1' : idx === 1 ? 'P2' : idx === 2 ? 'P3' : 'P4';
-              const isSelected = (selectedApp && selectedApp.id === app.id);
+              const isSelected = selectedApp && selectedApp.id === task.applicationId;
 
               return (
                 <div
-                  key={app.id}
-                  onClick={() => setSelectedAppId(app.id)}
+                  key={task.applicationId}
+                  onClick={() => setSelectedTaskId(task.applicationId)}
                   className={`p-3.5 rounded-lg border transition cursor-pointer flex items-center justify-between gap-3 ${
                     isSelected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-md'
@@ -118,17 +79,17 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
                     <div>
                       <div className="font-bold text-sm text-white flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                        {app.company}
+                        {task.companyName}
                       </div>
-                      <div className="text-xs text-slate-400">{app.role}</div>
+                      <div className="text-xs text-slate-400">{task.roleTitle}</div>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
                     <div className="text-xs font-mono font-bold text-rose-400">
-                      {app.daysElapsed} days
+                      {task.daysElapsed} days
                     </div>
-                    <div className="text-[10px] text-slate-500">{app.lastDate}</div>
+                    <div className="text-[10px] text-slate-500">{task.recipientEmail}</div>
                   </div>
                 </div>
               );
@@ -155,12 +116,12 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
               </label>
               <select
                 value={selectedApp?.id || ''}
-                onChange={(e) => setSelectedAppId(e.target.value)}
+                onChange={(e) => setSelectedTaskId(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-cyan-500"
               >
-                {staleApps.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.company} — {a.role} ({a.daysElapsed}d)
+                {followUpTasks.map((t) => (
+                  <option key={t.applicationId} value={t.applicationId}>
+                    {t.companyName} — {t.roleTitle} ({t.daysElapsed}d)
                   </option>
                 ))}
               </select>
@@ -172,7 +133,7 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
               </label>
               <select
                 value={tone}
-                onChange={(e) => setTone(e.target.value as any)}
+                onChange={(e) => setTone(e.target.value as OutreachTone)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-cyan-500"
               >
                 <option value="leverage">Executive Leverage (Offer Accelerator)</option>
@@ -202,7 +163,7 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
             <input
               type="text"
               readOnly
-              value={emailContent.subject}
+              value={currentMessage.subject}
               className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 focus:outline-none"
             />
           </div>
@@ -214,7 +175,7 @@ export const FollowUpQueue: React.FC<FollowUpQueueProps> = ({ applications }) =>
             <textarea
               readOnly
               rows={9}
-              value={emailContent.body}
+              value={currentMessage.body}
               className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 leading-relaxed focus:outline-none resize-none"
             />
           </div>
