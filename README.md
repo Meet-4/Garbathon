@@ -3,6 +3,9 @@
 > **AI Intelligence Engine & Security Shield for Laid-Off Job Seekers**  
 > *Deterministic Scam Detection, Pipeline Management, Automated Follow-Ups, and Technical Interview Prep.*
 
+🚀 **Live Vercel Deployment:** [https://instant-cygnus-d0u40lb.tmp.now](https://instant-cygnus-d0u40lb.tmp.now)  
+🔗 **Permanent Claim Link:** [Claim Deployment on Vercel](https://vercel.com/claim-deployment?code=6b868f2e-0f95-40de-8bc4-b65a30d8c7ba)
+
 ---
 
 ## 🌟 Overview
