@@ -52,21 +52,33 @@ High-volume job searches during tech layoffs often result in 100+ unorganized em
 ## 📁 Repository Structure
 
 ```
-├── index.html              # Main Single-Page Application
-├── css/
-│   ├── variables.css       # Design tokens (colors, gradients, glassmorphism)
-│   ├── base.css            # Base reset, layout, and keyframe animations
-│   ├── components.css      # Reusable UI controls, stats, badges, and modals
-│   └── modules.css         # Module layouts (Radar, Kanban, Follow-up, Simulator)
-├── js/
-│   ├── mockData.js         # 20 raw inbox test emails with metadata
-│   ├── heuristics.js       # Deterministic fraud detection and status classifier
-│   ├── kanban.js           # Kanban pipeline manager
-│   ├── followUp.js         # 7-day inactivity engine and outreach generator
-│   ├── interviewPrep.js    # Interview briefing countdown and flashcards
-│   ├── sandbox.js          # Interactive live email analyzer sandbox
-│   ├── export.js           # JSON and CSV export handlers
-│   └── app.js              # Application bootstrap and event coordinator
+├── index.html                   # HTML Entry Point
+├── package.json                 # React 18, Vite, TypeScript, Tailwind dependencies
+├── tsconfig.json                # TypeScript Configuration
+├── vite.config.ts               # Vite Configuration
+├── tailwind.config.js           # Tailwind Dark-Mode Tokens & Styling
+├── postcss.config.js            # PostCSS Autoprefixer Configuration
+├── src/
+│   ├── main.tsx                 # React Root Mounting Entry
+│   ├── App.tsx                  # Main Coordinator & State Orchestrator
+│   ├── index.css                # Tailwind Directives & Custom Styling
+│   ├── types/
+│   │   └── index.ts             # TypeScript Interfaces & Pipeline Types
+│   ├── data/
+│   │   └── mockEmails.ts        # Ingested 20 Mock Raw Candidate Emails
+│   ├── services/
+│   │   └── heuristics.ts        # Deterministic Fraud Heuristics & Status Engine
+│   └── components/
+│       ├── Header.tsx           # App Header & Verified Export Actions
+│       ├── StatsOverview.tsx    # Executive Metric Tiles
+│       ├── ScamAlertBanner.tsx  # Critical Threat Quarantined Banner
+│       ├── KanbanBoard.tsx      # Interactive 5-Stage Kanban Pipeline
+│       ├── ScamRadar.tsx        # Threat Inspection & IC3 Defense Notices
+│       ├── FollowUpQueue.tsx    # 7-Day Inactivity Table & Smart Outreach Generator
+│       ├── InterviewPrep.tsx    # OpenAI Live Countdown & Architecture Flashcards
+│       ├── SecuritySandbox.tsx  # Interactive Live Threat Testing Console
+│       ├── RawInboxFeed.tsx     # Full Inbound Audit Trail
+│       └── DetailModal.tsx      # Comprehensive Thread & Application Inspector
 ├── .gitignore
 └── README.md
 ```
@@ -75,17 +87,20 @@ High-volume job searches during tech layoffs often result in 100+ unorganized em
 
 ## 💻 Quick Start
 
-Run a local server with Python or Node:
+Run the Vite development server:
 
 ```bash
-# Using Python
-python -m http.server 3000
+# Install dependencies
+npm install
 
-# Or using Node / npx
-npx serve .
+# Start Vite dev server
+npm run dev
+
+# Or compile production bundle
+npm run build
 ```
 
-Open your browser at `http://localhost:3000`.
+Open your browser at `http://localhost:5173`.
 
 ---
 
